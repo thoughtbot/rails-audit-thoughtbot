@@ -32,7 +32,7 @@ Testing Rails best practices.
 This skill analyses Rails applications and generates detailed audit reports
 covering:
 
-- Testing practices (RSpec/Minitest)
+- Testing practices (RSpec)
 - Security vulnerabilities
 - Code design (skinny controllers, domain models, POROs with ActiveModel)
 - Rails conventions
