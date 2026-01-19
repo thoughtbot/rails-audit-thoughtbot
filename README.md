@@ -36,7 +36,7 @@ covering:
 - Security vulnerabilities
 - Code design (skinny controllers, domain models, POROs with ActiveModel)
 - Rails conventions
-- Database optimization
+- Database optimisation
 - Ruby best practices
 
 ## Installation
@@ -55,25 +55,31 @@ git clone https://github.com/yourusername/rails-audit-thoughtbot ~/.claude/skill
 
 ## Usage
 
-Invoke the skill by asking Claude Code to perform a Rails audit:
+If you are in your terminal and not in a Claude session, you can invoke the 
+skill directly by using the below. You need to be in the root directory of your 
+Rails project.
 
 ### Full application audit
 
 ```
-claude perform an audit of this application
+claude audit
+```
+
+If you are in a Claude session, you can reference the skill directly:
+
+```
+/rails-audit-thoughtbot
 ```
 
 ### Targeted audit
 
-```
-claude audit the User model and its related files
-```
+In a Claude session you can also run targeted audits:
 
 ```
-claude audit the authentication system for security issues
+/rails-audit-thoughtbot audit controllers
 ```
 
-This focuses the audit on specific files or directories you specify.
+This focuses the audit on specific files or directories.
 
 ## Reference materials
 
