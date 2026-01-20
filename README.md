@@ -50,7 +50,7 @@ cp -r rails-audit-thoughtbot ~/.claude/skills/
 Or clone directly:
 
 ```bash
-git clone https://github.com/yourusername/rails-audit-thoughtbot ~/.claude/skills/rails-audit-thoughtbot
+git clone https://github.com/thoughtbot/rails-audit-thoughtbot ~/.claude/skills/rails-audit-thoughtbot
 ```
 
 ## Usage
