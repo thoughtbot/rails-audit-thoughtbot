@@ -23,94 +23,19 @@ Ask user or infer from request:
 
 ### Step 2: Collect Test Coverage Data (Optional)
 
-#### Step 2.1 — Ask the User
+**Before doing anything else in this step**, use `AskUserQuestion` to ask the user:
+- **Question**: "Would you like to collect actual test coverage data using SimpleCov? This will temporarily set up SimpleCov (if not already present), run the test suite, and capture real coverage metrics."
+- **Options**: "Yes, collect coverage (Recommended)" / "No, use estimation"
 
-Prompt the user whether they want to collect actual test coverage data using SimpleCov. Explain that this will temporarily install SimpleCov (if not already present), run the test suite, and capture real coverage metrics. If the user declines, skip to Step 3 and use estimation mode for the Testing section.
+**If the user declines**: skip the rest of this step entirely. Use estimation mode in Steps 4 and 5. Do NOT spawn the subagent.
 
-#### Step 2.2 — Detect Test Framework
+**If the user accepts**: use the **Task tool** to spawn a `general-purpose` subagent with this prompt:
 
-- Check for `spec/` directory + `rspec-rails` in Gemfile → **RSpec**
-- Check for `test/` directory → **Minitest**
-- Determine the test helper file:
-  - RSpec: `spec/rails_helper.rb` (preferred) or `spec/spec_helper.rb`
-  - Minitest: `test/test_helper.rb`
-- Determine the run command:
-  - RSpec: `bundle exec rspec`
-  - Minitest: `bundle exec rails test`
+> Read the file `agents/simplecov_agent.md` and follow all steps described in it. The audit scope is: {{SCOPE from Step 1}}. Return the coverage data in the output format specified in that file.
 
-#### Step 2.3 — Check if SimpleCov Already Present
-
-- Search `Gemfile` for `simplecov`
-- Search the test helper for `SimpleCov.start`
-- If both are present: set `SIMPLECOV_ALREADY_PRESENT = true`, skip setup and cleanup steps (2.4 and 2.6), just run tests and capture data
-- If not present: proceed with full setup
-
-#### Step 2.4 — Backup and Setup (skip if SimpleCov already present)
-
-1. **Backup Gemfile and lockfile**:
-   - Primary: `git stash push -m "rails-audit-simplecov-setup" -- Gemfile Gemfile.lock`
-   - Fallback (if git stash fails): `cp Gemfile Gemfile.audit_backup && cp Gemfile.lock Gemfile.lock.audit_backup`
-
-2. **Add SimpleCov to Gemfile**:
-   - Look for `group :test do` in Gemfile and add `gem "simplecov", require: false` inside it
-   - If no `group :test` block exists, use `group :development, :test do` instead
-
-3. **Install the gem**: Run `bundle install`
-   - If `bundle install` fails: abort coverage collection, restore backups, warn the user, and proceed with estimation mode
-
-4. **Stop Spring** (if present): Check for `bin/spring` and run `bin/spring stop`
-
-5. **Prepend SimpleCov configuration to test helper**:
-   ```ruby
-   require "simplecov"
-   SimpleCov.start "rails" do
-     enable_coverage :branch
-     formatter SimpleCov::Formatter::JSONFormatter
-   end
-   ```
-   Prepend these lines at the very top of the test helper file, before any other `require` statements.
-
-#### Step 2.5 — Run Tests and Capture Coverage
-
-1. Run the appropriate test command:
-   - Full audit: run the full suite (`bundle exec rspec` or `bundle exec rails test`)
-   - Targeted audit: run only tests relevant to the audit scope
-
-2. Read `coverage/.resultset.json` and parse the coverage data.
-
-3. **Parsing `.resultset.json`**: The file structure is:
-   ```json
-   {
-     "RSpec": {
-       "coverage": {
-         "/path/to/app/models/user.rb": {
-           "lines": [1, 1, null, 0, 0, 1],
-           "branches": {}
-         }
-       }
-     }
-   }
-   ```
-   - Line coverage % = `(count of lines >= 1) / (count of lines != null) * 100`
-   - Aggregate coverage by directory (`app/models/`, `app/controllers/`, etc.)
-   - Extract per-file coverage percentages
-
-4. Store parsed data in context for use in Step 5.
-
-5. **If tests fail**: still read coverage data (SimpleCov writes results on exit regardless). Note test failures separately in the report.
-
-6. **If `.resultset.json` is missing**: warn the user and fall back to estimation mode for the Testing section.
-
-#### Step 2.6 — Cleanup (skip if SimpleCov was already present)
-
-1. **Remove SimpleCov lines from test helper**: delete the prepended `require "simplecov"` and `SimpleCov.start` block
-2. **Restore Gemfile**:
-   - Primary: `git stash pop`
-   - If stash pop conflicts: `git checkout -- Gemfile Gemfile.lock` then `bundle install`
-   - Fallback: restore from `Gemfile.audit_backup` and `Gemfile.lock.audit_backup` copies, then delete the backup files
-3. **Verify bundle**: run `bundle check` — if it fails, run `bundle install`
-4. **Remove coverage directory**: `rm -rf coverage/`
-5. **Verify clean state**: run `git status` to confirm no leftover changes
+**Interpreting the agent's response:**
+- If the response starts with `COVERAGE_FAILED`: no coverage data — use estimation mode in Steps 4 and 5. Note the failure reason in the report.
+- If the response starts with `COVERAGE_DATA`: parse the structured data and keep it in context for Steps 4 and 5. The data includes overall coverage, per-directory breakdowns, lowest-coverage files, and zero-coverage files.
 
 ### Step 3: Load Reference Materials
 
