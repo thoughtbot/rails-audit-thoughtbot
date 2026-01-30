@@ -33,6 +33,8 @@ Ask user or infer from request:
 
 > Read the file `agents/simplecov_agent.md` and follow all steps described in it. The audit scope is: {{SCOPE from Step 1}}. Return the coverage data in the output format specified in that file.
 
+**After the agent finishes**, run `rm -rf coverage/` to ensure the coverage directory is removed even if the agent failed to clean up.
+
 **Interpreting the agent's response:**
 - If the response starts with `COVERAGE_FAILED`: no coverage data — use estimation mode in Steps 4 and 5. Note the failure reason in the report.
 - If the response starts with `COVERAGE_DATA`: parse the structured data and keep it in context for Steps 4 and 5. The data includes overall coverage, per-directory breakdowns, lowest-coverage files, and zero-coverage files.

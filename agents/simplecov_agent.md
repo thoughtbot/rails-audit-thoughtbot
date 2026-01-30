@@ -76,14 +76,17 @@ You are a subagent responsible for collecting test coverage data from a Rails ap
 
 5. **If `.resultset.json` is missing**: warn the user and return with `COVERAGE_FAILED: .resultset.json not generated`.
 
-## Step 5 — Cleanup (skip if SimpleCov was already present)
+## Step 5 — Cleanup
 
+**If SimpleCov was NOT already present**, undo the setup:
 1. **Remove SimpleCov lines from test helper**: delete the prepended `require "simplecov"` and `SimpleCov.start` block
 2. **Restore Gemfile**:
    - Primary: `git stash pop`
    - If stash pop conflicts: `git checkout -- Gemfile Gemfile.lock` then `bundle install`
    - Fallback: restore from `Gemfile.audit_backup` and `Gemfile.lock.audit_backup` copies, then delete the backup files
 3. **Verify bundle**: run `bundle check` — if it fails, run `bundle install`
+
+**Always, regardless of whether SimpleCov was already present:**
 4. **Remove coverage directory**: `rm -rf coverage/`
 5. **Verify clean state**: run `git status` to confirm no leftover changes
 
