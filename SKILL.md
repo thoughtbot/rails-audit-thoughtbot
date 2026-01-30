@@ -21,7 +21,98 @@ Ask user or infer from request:
 - Full audit: Analyze all of `app/`, `spec/` or `test/`, `config/`, `db/`, `lib/`
 - Targeted audit: Analyze specified paths only
 
-### Step 2: Load Reference Materials
+### Step 2: Collect Test Coverage Data (Optional)
+
+#### Step 2.1 — Ask the User
+
+Prompt the user whether they want to collect actual test coverage data using SimpleCov. Explain that this will temporarily install SimpleCov (if not already present), run the test suite, and capture real coverage metrics. If the user declines, skip to Step 3 and use estimation mode for the Testing section.
+
+#### Step 2.2 — Detect Test Framework
+
+- Check for `spec/` directory + `rspec-rails` in Gemfile → **RSpec**
+- Check for `test/` directory → **Minitest**
+- Determine the test helper file:
+  - RSpec: `spec/rails_helper.rb` (preferred) or `spec/spec_helper.rb`
+  - Minitest: `test/test_helper.rb`
+- Determine the run command:
+  - RSpec: `bundle exec rspec`
+  - Minitest: `bundle exec rails test`
+
+#### Step 2.3 — Check if SimpleCov Already Present
+
+- Search `Gemfile` for `simplecov`
+- Search the test helper for `SimpleCov.start`
+- If both are present: set `SIMPLECOV_ALREADY_PRESENT = true`, skip setup and cleanup steps (2.4 and 2.6), just run tests and capture data
+- If not present: proceed with full setup
+
+#### Step 2.4 — Backup and Setup (skip if SimpleCov already present)
+
+1. **Backup Gemfile and lockfile**:
+   - Primary: `git stash push -m "rails-audit-simplecov-setup" -- Gemfile Gemfile.lock`
+   - Fallback (if git stash fails): `cp Gemfile Gemfile.audit_backup && cp Gemfile.lock Gemfile.lock.audit_backup`
+
+2. **Add SimpleCov to Gemfile**:
+   - Look for `group :test do` in Gemfile and add `gem "simplecov", require: false` inside it
+   - If no `group :test` block exists, use `group :development, :test do` instead
+
+3. **Install the gem**: Run `bundle install`
+   - If `bundle install` fails: abort coverage collection, restore backups, warn the user, and proceed with estimation mode
+
+4. **Stop Spring** (if present): Check for `bin/spring` and run `bin/spring stop`
+
+5. **Prepend SimpleCov configuration to test helper**:
+   ```ruby
+   require "simplecov"
+   SimpleCov.start "rails" do
+     enable_coverage :branch
+     formatter SimpleCov::Formatter::JSONFormatter
+   end
+   ```
+   Prepend these lines at the very top of the test helper file, before any other `require` statements.
+
+#### Step 2.5 — Run Tests and Capture Coverage
+
+1. Run the appropriate test command:
+   - Full audit: run the full suite (`bundle exec rspec` or `bundle exec rails test`)
+   - Targeted audit: run only tests relevant to the audit scope
+
+2. Read `coverage/.resultset.json` and parse the coverage data.
+
+3. **Parsing `.resultset.json`**: The file structure is:
+   ```json
+   {
+     "RSpec": {
+       "coverage": {
+         "/path/to/app/models/user.rb": {
+           "lines": [1, 1, null, 0, 0, 1],
+           "branches": {}
+         }
+       }
+     }
+   }
+   ```
+   - Line coverage % = `(count of lines >= 1) / (count of lines != null) * 100`
+   - Aggregate coverage by directory (`app/models/`, `app/controllers/`, etc.)
+   - Extract per-file coverage percentages
+
+4. Store parsed data in context for use in Step 5.
+
+5. **If tests fail**: still read coverage data (SimpleCov writes results on exit regardless). Note test failures separately in the report.
+
+6. **If `.resultset.json` is missing**: warn the user and fall back to estimation mode for the Testing section.
+
+#### Step 2.6 — Cleanup (skip if SimpleCov was already present)
+
+1. **Remove SimpleCov lines from test helper**: delete the prepended `require "simplecov"` and `SimpleCov.start` block
+2. **Restore Gemfile**:
+   - Primary: `git stash pop`
+   - If stash pop conflicts: `git checkout -- Gemfile Gemfile.lock` then `bundle install`
+   - Fallback: restore from `Gemfile.audit_backup` and `Gemfile.lock.audit_backup` copies, then delete the backup files
+3. **Verify bundle**: run `bundle check` — if it fails, run `bundle install`
+4. **Remove coverage directory**: `rm -rf coverage/`
+5. **Verify clean state**: run `git status` to confirm no leftover changes
+
+### Step 3: Load Reference Materials
 
 Before analyzing, read the relevant reference files:
 - `references/code_smells.md` - Code smell patterns to identify
@@ -30,11 +121,13 @@ Before analyzing, read the relevant reference files:
 - `references/security_checklist.md` - Security vulnerability patterns
 - `references/rails_antipatterns.md` - Rails-specific antipatterns (external services, migrations, performance)
 
-### Step 3: Analyze Code by Category
+### Step 4: Analyze Code by Category
 
 Analyze in this order:
 
 1. **Testing Coverage & Quality**
+   - If SimpleCov data was collected in Step 2, use actual coverage percentages instead of estimates
+   - Cross-reference per-file SimpleCov data: files with 0% coverage = "missing tests"
    - Check for missing test files
    - Identify untested public methods
    - Review test structure (Four Phase Test)
@@ -88,9 +181,11 @@ Analyze in this order:
    - Performance antipatterns (Ruby iteration vs SQL queries)
    - Bulk operations without transactions
 
-### Step 4: Generate Audit Report
+### Step 5: Generate Audit Report
 
 Create `RAILS_AUDIT_REPORT.md` in project root with structure defined in `references/report_template.md`.
+
+When SimpleCov coverage data was collected in Step 2, use the **SimpleCov variant** of the Testing section in the report template. When coverage data is not available, use the **estimation variant**.
 
 ## Severity Definitions
 
