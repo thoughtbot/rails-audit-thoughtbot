@@ -11,9 +11,12 @@ Testing Rails best practices.
 
 - **[Ruby Science][ruby-science]** - thoughtbot's guide to fixing code smells
 - **[Testing Rails][testing-rails]** - thoughtbot's guide to testing Rails applications
+- **[Rails Antipatterns][rails-antipatterns]** - Best practices for Ruby on 
+  Rails refactoring (Chad Pytel & Tammer Saleh)
 
 [ruby-science]: https://github.com/thoughtbot/ruby-science
 [testing-rails]: https://github.com/thoughtbot/testing-rails
+[rails-antipatterns]: https://www.informit.com/store/rails-antipatterns-best-practice-ruby-on-rails-refactoring-9780321604811
 
 ## Table of contents
 
@@ -36,7 +39,9 @@ covering:
 - Security vulnerabilities
 - Code design (skinny controllers, domain models, POROs with ActiveModel)
 - Rails conventions
-- Database optimisation
+- Database optimisation (missing indexes, migrations hygiene)
+- External services (timeouts, error handling, background jobs)
+- Performance antipatterns (Ruby vs SQL, silent failures)
 - Ruby best practices
 
 ## Installation
@@ -83,8 +88,8 @@ This focuses the audit on specific files or directories.
 
 ## Reference materials
 
-The skill includes reference documentation based on thoughtbot best practices. 
-All the materials are compacted information from the two books mentioned above.
+The skill includes reference documentation based on thoughtbot best practices.
+All the materials are compacted information from the books mentioned above.
 
 Recommendations of PORO objects are based on different thoughtbot sources and
 [Service objects are poorly-named models][service-objects-poro].
@@ -93,10 +98,11 @@ Recommendations of PORO objects are based on different thoughtbot sources and
 
 | File | Description |
 |------|-------------|
-| `references/code_smells.md` | Code smell patterns to identify |
-| `references/testing_guidelines.md` | Testing best practices (RSpec) |
+| `references/code_smells.md` | Code smell patterns to identify (Ruby Science) |
+| `references/testing_guidelines.md` | Testing best practices (Testing Rails) |
 | `references/poro_patterns.md` | PORO and ActiveModel patterns |
 | `references/security_checklist.md` | Security vulnerability checklist |
+| `references/rails_antipatterns.md` | Rails-specific antipatterns: external services, migrations, performance |
 | `references/report_template.md` | Audit report structure template |
 
 ## Contributing
@@ -122,6 +128,7 @@ This skill is inspired by and based on thoughtbot's excellent guides:
 
 - [Ruby Science](https://github.com/thoughtbot/ruby-science)
 - [Testing Rails](https://github.com/thoughtbot/testing-rails)
+- [Rails Antipatterns](https://www.informit.com/store/rails-antipatterns-best-practice-ruby-on-rails-refactoring-9780321604811) by Chad Pytel & Tammer Saleh
 
 The names and logos for thoughtbot are trademarks of thoughtbot, inc.
 

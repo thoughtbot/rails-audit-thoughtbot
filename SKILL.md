@@ -27,6 +27,8 @@ Before analyzing, read the relevant reference files:
 - `references/code_smells.md` - Code smell patterns to identify
 - `references/testing_guidelines.md` - Testing best practices
 - `references/poro_patterns.md` - PORO and ActiveModel patterns
+- `references/security_checklist.md` - Security vulnerability patterns
+- `references/rails_antipatterns.md` - Rails-specific antipatterns (external services, migrations, performance)
 
 ### Step 3: Analyze Code by Category
 
@@ -49,14 +51,16 @@ Analyze in this order:
    - Fat model detection
    - Missing validations
    - N+1 query risks
-   - Missing indexes
    - Callback complexity
+   - Law of Demeter violations (voyeuristic models)
 
 4. **Controllers**
    - Fat controller detection
    - Business logic in controllers
    - Missing strong parameters
    - Response handling
+   - Monolithic controllers (non-RESTful actions, > 7 actions)
+   - Bloated sessions (storing objects instead of IDs)
 
 5. **Code Design & Architecture**
    - Service Objects → recommend PORO refactoring
@@ -67,9 +71,22 @@ Analyze in this order:
    - Single Responsibility violations
 
 6. **Views & Presenters**
-   - Logic in views
+   - Logic in views (PHPitis)
    - Missing partials for DRY
    - Helper complexity
+   - Query logic in views
+
+7. **External Services & Error Handling**
+   - Fire and forget (missing exception handling for HTTP calls)
+   - Sluggish services (missing timeouts, synchronous calls that should be backgrounded)
+   - Bare rescue statements
+   - Silent failures (save without checking return value)
+
+8. **Database & Migrations**
+   - Messy migrations (model references, missing down methods)
+   - Missing indexes on foreign keys, polymorphic associations, uniqueness validations
+   - Performance antipatterns (Ruby iteration vs SQL queries)
+   - Bulk operations without transactions
 
 ### Step 4: Generate Audit Report
 

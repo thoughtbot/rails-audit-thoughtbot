@@ -25,6 +25,8 @@ Use this template when generating the final audit report.
 | Controllers | X | X | X | X | X |
 | Code Design | X | X | X | X | X |
 | Views | X | X | X | X | X |
+| External Services | X | X | X | X | X |
+| Database & Performance | X | X | X | X | X |
 | **Total** | **X** | **X** | **X** | **X** | **X** |
 
 ### Key Findings
@@ -373,6 +375,138 @@ end
 
 ---
 
+## 7. External Services Issues
+
+### High Severity
+
+#### [ISSUE_ID] Fire and Forget: Missing Exception Handling
+
+**File**: `app/models/webhook_sender.rb:15`
+**Impact**: Errors silently swallowed, no visibility into failures
+**Details**: External API call without specific exception handling
+
+**Current Code**:
+```ruby
+def send_webhook(data)
+  ApiClient.post("/webhook", data)
+rescue
+  nil  # Swallows ALL errors including bugs
+end
+```
+
+**Recommendation**:
+```ruby
+HTTP_ERRORS = [
+  Timeout::Error, Errno::ECONNRESET, Net::HTTPBadResponse,
+  SocketError, Errno::ECONNREFUSED
+].freeze
+
+def send_webhook(data)
+  ApiClient.post("/webhook", data)
+rescue *HTTP_ERRORS => e
+  ErrorTracker.notify(e)
+  nil
+end
+```
+
+### Medium Severity
+
+#### [ISSUE_ID] Missing Timeout on HTTP Client
+
+**File**: `app/services/api_client.rb:8`
+**Impact**: Requests can hang indefinitely, blocking web workers
+**Details**: HTTP client uses default 60-second timeout
+
+**Recommendation**:
+```ruby
+http = Net::HTTP.new(uri.host, uri.port)
+http.open_timeout = 5
+http.read_timeout = 5
+```
+
+---
+
+## 8. Database & Performance Issues
+
+### High Severity
+
+#### [ISSUE_ID] Missing Index on Foreign Key
+
+**File**: `db/schema.rb`
+**Impact**: Slow queries on joins and lookups
+**Details**: Column `posts.user_id` has no index
+
+**Recommendation**:
+```ruby
+# db/migrate/XXXXXXXX_add_index_to_posts_user_id.rb
+add_index :posts, :user_id
+```
+
+#### [ISSUE_ID] Ruby Iteration Instead of SQL
+
+**File**: `app/models/order.rb:45`
+**Impact**: Loads all records into memory, very slow on large datasets
+**Details**: Using Ruby to filter records that should be SQL query
+
+**Current Code**:
+```ruby
+def self.high_value
+  all.select { |o| o.total > 100 }
+end
+```
+
+**Recommendation**:
+```ruby
+def self.high_value
+  where("total > ?", 100)
+end
+```
+
+### Medium Severity
+
+#### [ISSUE_ID] Silent Failure in Background Job
+
+**File**: `app/jobs/process_order_job.rb:12`
+**Impact**: Orders may fail processing without any notification
+**Details**: Using `save` without checking return value
+
+**Current Code**:
+```ruby
+def perform(order)
+  order.status = "processed"
+  order.save
+end
+```
+
+**Recommendation**:
+```ruby
+def perform(order)
+  order.update!(status: "processed")
+end
+```
+
+#### [ISSUE_ID] Model Reference in Migration
+
+**File**: `db/migrate/20240115_backfill_counts.rb`
+**Impact**: Migration may fail if model changes, breaks future deployments
+**Details**: Migration references `User` model directly
+
+**Recommendation**:
+Use raw SQL or define model inline:
+```ruby
+class BackfillCounts < ActiveRecord::Migration[7.1]
+  def up
+    execute <<-SQL
+      UPDATE users SET posts_count = (
+        SELECT count(*) FROM posts WHERE posts.user_id = users.id
+      )
+    SQL
+  end
+end
+```
+
+---
+
 ## Recommendations Summary
 
 ### Quick Wins (Immediate Action)
@@ -404,6 +538,9 @@ end
 | app/services/ | X | X |
 | app/views/ | X | X |
 | app/helpers/ | X | X |
+| app/jobs/ | X | X |
+| db/migrate/ | X | X |
+| config/ | X | X |
 | spec/ or test/ | X | X |
 | **Total** | **X** | **X** |
 
@@ -418,6 +555,9 @@ For ongoing code quality:
 3. **SimpleCov** - Test coverage
 4. **Bullet** - N+1 query detection
 5. **flog/flay** - Complexity metrics
+6. **bundler-audit** - Gem vulnerability scanning
+7. **database_consistency** - Missing indexes and constraints detection
+8. **strong_migrations** - Catch unsafe migrations
 
 ---
 
