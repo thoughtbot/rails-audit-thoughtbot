@@ -39,6 +39,24 @@ Ask user or infer from request:
 - If the response starts with `COVERAGE_FAILED`: no coverage data — use estimation mode in Steps 4 and 5. Note the failure reason in the report.
 - If the response starts with `COVERAGE_DATA`: parse the structured data and keep it in context for Steps 4 and 5. The data includes overall coverage, per-directory breakdowns, lowest-coverage files, and zero-coverage files.
 
+### Step 2b: Collect Code Quality Metrics (Optional)
+
+**Before doing anything else in this step**, use `AskUserQuestion` to ask the user:
+- **Question**: "Would you like to run RubyCritic for code quality metrics (complexity, duplication, code smells)? This will temporarily set up RubyCritic (if not already present) and analyze your codebase."
+- **Options**: "Yes, run RubyCritic (Recommended)" / "No, skip static analysis"
+
+**If the user declines**: skip the rest of this step entirely. Do NOT spawn the subagent.
+
+**If the user accepts**: use the **Task tool** to spawn a `general-purpose` subagent with this prompt:
+
+> Read the file `agents/rubycritic_agent.md` and follow all steps described in it. The audit scope is: {{SCOPE from Step 1}}. Return the code quality data in the output format specified in that file.
+
+**After the agent finishes**, run `rm -rf tmp/rubycritic/` to ensure the output directory is removed even if the agent failed to clean up.
+
+**Interpreting the agent's response:**
+- If the response starts with `RUBYCRITIC_FAILED`: no code quality data — note the failure reason in the report.
+- If the response starts with `RUBYCRITIC_DATA`: parse the structured data and keep it in context for Steps 4 and 5. The data includes overall score, per-directory ratings, worst-rated files, top smells, and most complex files.
+
 ### Step 3: Load Reference Materials
 
 Before analyzing, read the relevant reference files:
@@ -73,6 +91,7 @@ Analyze in this order:
    - N+1 query risks
    - Callback complexity
    - Law of Demeter violations (voyeuristic models)
+   - If RubyCritic data was collected, flag models with D/F ratings or high complexity
 
 4. **Controllers**
    - Fat controller detection
@@ -81,6 +100,7 @@ Analyze in this order:
    - Response handling
    - Monolithic controllers (non-RESTful actions, > 7 actions)
    - Bloated sessions (storing objects instead of IDs)
+   - If RubyCritic data was collected, flag controllers with D/F ratings or high complexity
 
 5. **Code Design & Architecture**
    - Service Objects → recommend PORO refactoring
@@ -89,6 +109,7 @@ Analyze in this order:
    - Feature envy
    - Law of Demeter violations
    - Single Responsibility violations
+   - If RubyCritic data was collected, cross-reference D/F rated files and high-complexity files with manual code review findings
 
 6. **Views & Presenters**
    - Logic in views (PHPitis)
@@ -113,6 +134,8 @@ Analyze in this order:
 Create `RAILS_AUDIT_REPORT.md` in project root with structure defined in `references/report_template.md`.
 
 When SimpleCov coverage data was collected in Step 2, use the **SimpleCov variant** of the Testing section in the report template. When coverage data is not available, use the **estimation variant**.
+
+When RubyCritic data was collected in Step 2b, include the **Code Quality Metrics** section in the report using the RubyCritic variant from the report template. When RubyCritic data is not available, use the **not available variant**.
 
 ## Severity Definitions
 

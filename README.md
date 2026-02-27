@@ -25,6 +25,9 @@ Testing Rails best practices.
 - [Usage](#usage)
   - [Full application audit](#full-application-audit)
   - [Targeted audit](#targeted-audit)
+- [Optional data collection](#optional-data-collection)
+  - [SimpleCov (test coverage)](#simplecov-test-coverage)
+  - [RubyCritic (code quality)](#rubycritic-code-quality)
 - [Reference materials](#reference-materials)
 - [Contributing](#contributing)
 - [License](#license)
@@ -36,6 +39,8 @@ This skill analyses Rails applications and generates detailed audit reports
 covering:
 
 - Testing practices (RSpec)
+- Test coverage via [SimpleCov](#optional-data-collection) (optional)
+- Code quality metrics via [RubyCritic](#optional-data-collection) (optional)
 - Security vulnerabilities
 - Code design (skinny controllers, domain models, POROs with ActiveModel)
 - Rails conventions
@@ -86,6 +91,36 @@ In a Claude session you can also run targeted audits:
 
 This focuses the audit on specific files or directories.
 
+## Optional data collection
+
+During the audit, the skill offers to run optional data-collection steps that
+enrich the report with tool-measured metrics. Each step is opt-in — you will be
+prompted before anything is installed or executed. If the tool is already in your
+Gemfile, the skill uses it directly without modifying your project.
+
+### SimpleCov (test coverage)
+
+Runs your test suite with [SimpleCov](https://github.com/simplecov-ruby/simplecov)
+to capture actual line and branch coverage percentages. The report will include
+per-directory coverage breakdowns, lowest-coverage files, and zero-coverage files.
+
+- Temporarily adds `simplecov` to the Gemfile (if not already present)
+- Runs the full test suite (RSpec or Minitest)
+- Restores the original Gemfile after collection
+- Cleans up all generated coverage files
+
+### RubyCritic (code quality)
+
+Runs [RubyCritic](https://github.com/whitesmith/rubycritic) to measure code
+complexity, duplication, and code smells using Reek, Flay, and Flog. The report
+will include per-file ratings (A-F), worst-rated files, most common smells, and
+most complex files.
+
+- Temporarily adds `rubycritic` to the Gemfile (if not already present)
+- Analyzes `app/` and `lib/` (or targeted paths)
+- Restores the original Gemfile after collection
+- Cleans up all generated report files
+
 ## Reference materials
 
 The skill includes reference documentation based on thoughtbot best practices.
@@ -104,6 +139,8 @@ Recommendations of PORO objects are based on different thoughtbot sources and
 | `references/security_checklist.md` | Security vulnerability checklist |
 | `references/rails_antipatterns.md` | Rails-specific antipatterns: external services, migrations, performance |
 | `references/report_template.md` | Audit report structure template |
+| `agents/simplecov_agent.md` | Subagent for SimpleCov test coverage collection |
+| `agents/rubycritic_agent.md` | Subagent for RubyCritic code quality metrics |
 
 ## Contributing
 
