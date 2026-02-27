@@ -40,7 +40,46 @@ Use this template when generating the final audit report.
 ## 1. Testing Issues
 
 ### Overview
+
+**When SimpleCov data is available (actual coverage):**
+
 - **Test Framework**: RSpec / Minitest
+- **Coverage Method**: SimpleCov (Actual)
+- **Overall Line Coverage**: XX.X%
+- **Overall Branch Coverage**: XX.X%
+- **Files with Tests**: X / Y (Z%)
+
+| Directory | Files | Line Coverage | Status |
+|-----------|-------|---------------|--------|
+| app/models/ | X / Y | XX.X% | Below/Meets/Exceeds target |
+| app/controllers/ | X / Y | XX.X% | ... |
+| app/services/ | X / Y | XX.X% | ... |
+| app/helpers/ | X / Y | XX.X% | ... |
+| app/mailers/ | X / Y | XX.X% | ... |
+
+**Coverage vs Targets:**
+
+| File Type | Target | Actual | Delta |
+|-----------|--------|--------|-------|
+| Model | 90% | XX.X% | +/-X% |
+| Controller | 80% | XX.X% | +/-X% |
+| Service/PORO | 90% | XX.X% | +/-X% |
+| Helper | 70% | XX.X% | +/-X% |
+| Mailer | 70% | XX.X% | +/-X% |
+
+**Lowest Coverage Files** (bottom 10):
+
+| File | Coverage |
+|------|----------|
+| path/to/file.rb | XX.X% |
+
+**Zero Coverage Files:**
+- `path/to/untested_file.rb`
+
+**When SimpleCov data is NOT available (estimation mode):**
+
+- **Test Framework**: RSpec / Minitest
+- **Coverage Method**: Manual Estimation
 - **Files with Tests**: X / Y (Z%)
 - **Estimated Coverage**: Low / Medium / High
 
@@ -552,7 +591,7 @@ For ongoing code quality:
 
 1. **RuboCop** - Style and lint checking
 2. **Brakeman** - Security scanning
-3. **SimpleCov** - Test coverage
+3. **SimpleCov** - Test coverage (if SimpleCov was used during this audit: "SimpleCov was used to generate the coverage data in this report. Consider keeping it permanently in your test suite for continuous coverage tracking.")
 4. **Bullet** - N+1 query detection
 5. **flog/flay** - Complexity metrics
 6. **bundler-audit** - Gem vulnerability scanning

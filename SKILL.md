@@ -21,7 +21,25 @@ Ask user or infer from request:
 - Full audit: Analyze all of `app/`, `spec/` or `test/`, `config/`, `db/`, `lib/`
 - Targeted audit: Analyze specified paths only
 
-### Step 2: Load Reference Materials
+### Step 2: Collect Test Coverage Data (Optional)
+
+**Before doing anything else in this step**, use `AskUserQuestion` to ask the user:
+- **Question**: "Would you like to collect actual test coverage data using SimpleCov? This will temporarily set up SimpleCov (if not already present), run the test suite, and capture real coverage metrics."
+- **Options**: "Yes, collect coverage (Recommended)" / "No, use estimation"
+
+**If the user declines**: skip the rest of this step entirely. Use estimation mode in Steps 4 and 5. Do NOT spawn the subagent.
+
+**If the user accepts**: use the **Task tool** to spawn a `general-purpose` subagent with this prompt:
+
+> Read the file `agents/simplecov_agent.md` and follow all steps described in it. The audit scope is: {{SCOPE from Step 1}}. Return the coverage data in the output format specified in that file.
+
+**After the agent finishes**, run `rm -rf coverage/` to ensure the coverage directory is removed even if the agent failed to clean up.
+
+**Interpreting the agent's response:**
+- If the response starts with `COVERAGE_FAILED`: no coverage data — use estimation mode in Steps 4 and 5. Note the failure reason in the report.
+- If the response starts with `COVERAGE_DATA`: parse the structured data and keep it in context for Steps 4 and 5. The data includes overall coverage, per-directory breakdowns, lowest-coverage files, and zero-coverage files.
+
+### Step 3: Load Reference Materials
 
 Before analyzing, read the relevant reference files:
 - `references/code_smells.md` - Code smell patterns to identify
@@ -30,11 +48,13 @@ Before analyzing, read the relevant reference files:
 - `references/security_checklist.md` - Security vulnerability patterns
 - `references/rails_antipatterns.md` - Rails-specific antipatterns (external services, migrations, performance)
 
-### Step 3: Analyze Code by Category
+### Step 4: Analyze Code by Category
 
 Analyze in this order:
 
 1. **Testing Coverage & Quality**
+   - If SimpleCov data was collected in Step 2, use actual coverage percentages instead of estimates
+   - Cross-reference per-file SimpleCov data: files with 0% coverage = "missing tests"
    - Check for missing test files
    - Identify untested public methods
    - Review test structure (Four Phase Test)
@@ -88,9 +108,11 @@ Analyze in this order:
    - Performance antipatterns (Ruby iteration vs SQL queries)
    - Bulk operations without transactions
 
-### Step 4: Generate Audit Report
+### Step 5: Generate Audit Report
 
 Create `RAILS_AUDIT_REPORT.md` in project root with structure defined in `references/report_template.md`.
+
+When SimpleCov coverage data was collected in Step 2, use the **SimpleCov variant** of the Testing section in the report template. When coverage data is not available, use the **estimation variant**.
 
 ## Severity Definitions
 
