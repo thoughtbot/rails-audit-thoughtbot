@@ -25,6 +25,7 @@ Use this template when generating the final audit report.
 | Category | Critical | High | Medium | Low | Total |
 |----------|----------|------|--------|-----|-------|
 | Testing | X | X | X | X | X |
+| Code Quality | X | X | X | X | X |
 | Security | X | X | X | X | X |
 | Models | X | X | X | X | X |
 | Controllers | X | X | X | X | X |
@@ -151,7 +152,61 @@ end
 
 ---
 
-## 2. Security Issues
+## 2. Code Quality Metrics
+
+### Overview
+
+**When RubyCritic data is available:**
+
+- **Analysis Tool**: RubyCritic (Reek + Flay + Flog)
+- **Overall Score**: XX.X / 100
+- **Total Files Analyzed**: N
+
+| Rating | Count | Percentage |
+|--------|-------|------------|
+| A (Excellent) | N | XX% |
+| B (Good) | N | XX% |
+| C (Needs Improvement) | N | XX% |
+| D (Poor) | N | XX% |
+| F (Critical) | N | XX% |
+
+**Ratings by Directory:**
+
+| Directory | Avg Score | A | B | C | D | F |
+|-----------|-----------|---|---|---|---|---|
+| app/models/ | XX.X | N | N | N | N | N |
+| app/controllers/ | XX.X | N | N | N | N | N |
+| app/services/ | XX.X | N | N | N | N | N |
+| app/helpers/ | XX.X | N | N | N | N | N |
+| lib/ | XX.X | N | N | N | N | N |
+
+**Worst Rated Files** (D and F):
+
+| File | Rating | Cost | Complexity | Duplication | Smells |
+|------|--------|------|------------|-------------|--------|
+| path/to/file.rb | F | XX.X | XX.X | N | N |
+
+**Most Common Code Smells:**
+
+| Smell Type | Occurrences | Analyzer |
+|------------|-------------|----------|
+| TooManyStatements | N | Reek |
+| HighComplexity | N | Flog |
+| DuplicateCode | N | Flay |
+
+**Most Complex Files** (top 10):
+
+| File | Complexity | Methods | Complexity/Method |
+|------|------------|---------|-------------------|
+| path/to/file.rb | XX.X | N | XX.X |
+
+**When RubyCritic data is NOT available:**
+
+- **Code Quality Metrics**: Not collected (manual estimation used)
+
+---
+
+## 3. Security Issues
 
 ### Critical Issues
 
@@ -206,7 +261,7 @@ end
 
 ---
 
-## 3. Models Issues
+## 4. Models Issues
 
 ### High Severity
 
@@ -286,7 +341,7 @@ end
 
 ---
 
-## 4. Controllers Issues
+## 5. Controllers Issues
 
 ### High Severity
 
@@ -319,7 +374,7 @@ end
 
 ---
 
-## 5. Code Design Issues
+## 6. Code Design Issues
 
 ### High Severity
 
@@ -385,7 +440,7 @@ end
 
 ---
 
-## 6. Views Issues
+## 7. Views Issues
 
 ### Medium Severity
 
@@ -419,7 +474,7 @@ end
 
 ---
 
-## 7. External Services Issues
+## 8. External Services Issues
 
 ### High Severity
 
@@ -470,7 +525,7 @@ http.read_timeout = 5
 
 ---
 
-## 8. Database & Performance Issues
+## 9. Database & Performance Issues
 
 ### High Severity
 
@@ -597,8 +652,8 @@ For ongoing code quality:
 1. **RuboCop** - Style and lint checking
 2. **Brakeman** - Security scanning
 3. **SimpleCov** - Test coverage (if SimpleCov was used during this audit: "SimpleCov was used to generate the coverage data in this report. Consider keeping it permanently in your test suite for continuous coverage tracking.")
-4. **Bullet** - N+1 query detection
-5. **flog/flay** - Complexity metrics
+4. **RubyCritic** - Code quality metrics combining Reek (code smells), Flay (duplication), and Flog (complexity) (if RubyCritic was used during this audit: "RubyCritic was used to generate the code quality metrics in this report. Consider running it periodically to track code quality trends.")
+5. **Bullet** - N+1 query detection
 6. **bundler-audit** - Gem vulnerability scanning
 7. **database_consistency** - Missing indexes and constraints detection
 8. **strong_migrations** - Catch unsafe migrations
