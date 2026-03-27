@@ -178,24 +178,13 @@ For each Ruby file in `app/`:
 
 ## Analysis Commands
 
-Use these bash patterns for file discovery:
+Use Claude Code's built-in tools instead of shell commands — they're faster, handle permissions correctly, and give better output:
 
-```bash
-# Find all Ruby files by type
-find app/models -name "*.rb" -type f
-find app/controllers -name "*.rb" -type f
-find app/services -name "*.rb" -type f 2>/dev/null
-
-# Find test files
-find spec -name "*_spec.rb" -type f 2>/dev/null
-find test -name "*_test.rb" -type f 2>/dev/null
-
-# Count lines per file
-wc -l app/models/*.rb
-
-# Find long files (over 200 lines)
-find app -name "*.rb" -exec wc -l {} + | awk '$1 > 200'
-```
+- **Find Ruby files by type**: Use the Glob tool with patterns like `app/models/**/*.rb`, `app/controllers/**/*.rb`, `app/services/**/*.rb`
+- **Find test files**: Use Glob with `spec/**/*_spec.rb` or `test/**/*_test.rb`
+- **Search for patterns in code**: Use the Grep tool (e.g., search for `rescue\s*$`, `\.save\b`, `params\.permit!`)
+- **Read and count lines in files**: Use the Read tool to inspect files; count lines from the output
+- **Find long files**: Use Glob to list all `app/**/*.rb` files, then Read each to check line count
 
 ## Report Output
 
