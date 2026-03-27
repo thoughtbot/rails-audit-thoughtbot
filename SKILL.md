@@ -27,19 +27,24 @@ Ask the user **both questions upfront** in a single `AskUserQuestion` so they ca
 - **Question**: "Before starting the audit, would you like to collect automated metrics?\n\n1. **SimpleCov** — runs your test suite to capture actual code coverage percentages\n2. **RubyCritic** — analyzes code complexity, duplication, and smells (does not run tests)\n\nBoth are recommended for the most thorough audit."
 - **Options**: "Yes to both (Recommended)" / "SimpleCov only" / "RubyCritic only" / "Skip both"
 
-Based on the user's choice, spawn the accepted subagents **in parallel** using the Task tool. Both can run at the same time because SimpleCov modifies the test helper while RubyCritic only reads source files — they don't conflict.
+**If both are accepted**, handle Gemfile setup once before launching agents in parallel — both agents use `git stash` on the Gemfile, so they would conflict if each managed it independently:
 
-**SimpleCov subagent** (if accepted):
+1. **Shared Gemfile setup**: Back up with `git stash push -m "rails-audit-metrics-setup" -- Gemfile Gemfile.lock`, add both `gem "simplecov", require: false` (in `group :test`) and `gem "rubycritic", require: false` (in `group :development`), then run `bundle install`. Skip this if both gems are already present.
+2. **Spawn both subagents in parallel**, telling each to skip Gemfile setup/cleanup:
 
-> Read the file `agents/simplecov_agent.md` and follow all steps described in it. The audit scope is: {{SCOPE from Step 1}}. Return the coverage data in the output format specified in that file.
+**SimpleCov subagent**:
 
-**RubyCritic subagent** (if accepted):
+> Read the file `agents/simplecov_agent.md` and follow all steps described in it. **Important: the Gemfile has already been set up with SimpleCov — treat it as already present (skip Steps 2, 3, and 5 Gemfile restore).** The audit scope is: {{SCOPE from Step 1}}. Return the coverage data in the output format specified in that file.
 
-> Read the file `agents/rubycritic_agent.md` and follow all steps described in it. The audit scope is: {{SCOPE from Step 1}}. Return the code quality data in the output format specified in that file.
+**RubyCritic subagent**:
 
-**After both agents finish**, clean up:
-- If SimpleCov ran: `rm -rf coverage/`
-- If RubyCritic ran: `rm -rf tmp/rubycritic/`
+> Read the file `agents/rubycritic_agent.md` and follow all steps described in it. **Important: the Gemfile has already been set up with RubyCritic — treat it as already present (skip Steps 2 and 5 Gemfile restore).** The audit scope is: {{SCOPE from Step 1}}. Return the code quality data in the output format specified in that file.
+
+3. **After both agents finish**, clean up: `rm -rf coverage/ tmp/rubycritic/`, then restore the Gemfile with `git stash pop` (skip if both gems were already present).
+
+**If only one is accepted**, spawn that single subagent and let it handle its own Gemfile setup/cleanup as normal.
+
+> Read the file `agents/{{simplecov_agent or rubycritic_agent}}.md` and follow all steps described in it. The audit scope is: {{SCOPE from Step 1}}. Return the data in the output format specified in that file.
 
 **Interpreting responses:**
 - `COVERAGE_FAILED` / `RUBYCRITIC_FAILED`: no data for that tool — use estimation mode (SimpleCov) or omit the section (RubyCritic). Note the failure reason in the report.
