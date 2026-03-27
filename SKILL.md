@@ -199,4 +199,4 @@ find app -name "*.rb" -exec wc -l {} + | awk '$1 > 200'
 
 ## Report Output
 
-Always save the audit report to `/mnt/user-data/outputs/RAILS_AUDIT_REPORT.md` and present it to the user.
+Always save the audit report to `RAILS_AUDIT_REPORT.md` in the project root and present it to the user.
