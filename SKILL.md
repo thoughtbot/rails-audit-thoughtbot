@@ -21,41 +21,30 @@ Ask user or infer from request:
 - Full audit: Analyze all of `app/`, `spec/` or `test/`, `config/`, `db/`, `lib/`
 - Targeted audit: Analyze specified paths only
 
-### Step 2: Collect Test Coverage Data (Optional)
+### Step 2: Collect Optional Metrics (SimpleCov + RubyCritic)
 
-**Before doing anything else in this step**, use `AskUserQuestion` to ask the user:
-- **Question**: "Would you like to collect actual test coverage data using SimpleCov? This will temporarily set up SimpleCov (if not already present), run the test suite, and capture real coverage metrics."
-- **Options**: "Yes, collect coverage (Recommended)" / "No, use estimation"
+Ask the user **both questions upfront** in a single `AskUserQuestion` so they can decide once:
+- **Question**: "Before starting the audit, would you like to collect automated metrics?\n\n1. **SimpleCov** — runs your test suite to capture actual code coverage percentages\n2. **RubyCritic** — analyzes code complexity, duplication, and smells (does not run tests)\n\nBoth are recommended for the most thorough audit."
+- **Options**: "Yes to both (Recommended)" / "SimpleCov only" / "RubyCritic only" / "Skip both"
 
-**If the user declines**: skip the rest of this step entirely. Use estimation mode in Steps 4 and 5. Do NOT spawn the subagent.
+Based on the user's choice, spawn the accepted subagents **in parallel** using the Task tool. Both can run at the same time because SimpleCov modifies the test helper while RubyCritic only reads source files — they don't conflict.
 
-**If the user accepts**: use the **Task tool** to spawn a `general-purpose` subagent with this prompt:
+**SimpleCov subagent** (if accepted):
 
 > Read the file `agents/simplecov_agent.md` and follow all steps described in it. The audit scope is: {{SCOPE from Step 1}}. Return the coverage data in the output format specified in that file.
 
-**After the agent finishes**, run `rm -rf coverage/` to ensure the coverage directory is removed even if the agent failed to clean up.
-
-**Interpreting the agent's response:**
-- If the response starts with `COVERAGE_FAILED`: no coverage data — use estimation mode in Steps 4 and 5. Note the failure reason in the report.
-- If the response starts with `COVERAGE_DATA`: parse the structured data and keep it in context for Steps 4 and 5. The data includes overall coverage, per-directory breakdowns, lowest-coverage files, and zero-coverage files.
-
-### Step 2b: Collect Code Quality Metrics (Optional)
-
-**Before doing anything else in this step**, use `AskUserQuestion` to ask the user:
-- **Question**: "Would you like to run RubyCritic for code quality metrics (complexity, duplication, code smells)? This will temporarily set up RubyCritic (if not already present) and analyze your codebase."
-- **Options**: "Yes, run RubyCritic (Recommended)" / "No, skip static analysis"
-
-**If the user declines**: skip the rest of this step entirely. Do NOT spawn the subagent.
-
-**If the user accepts**: use the **Task tool** to spawn a `general-purpose` subagent with this prompt:
+**RubyCritic subagent** (if accepted):
 
 > Read the file `agents/rubycritic_agent.md` and follow all steps described in it. The audit scope is: {{SCOPE from Step 1}}. Return the code quality data in the output format specified in that file.
 
-**After the agent finishes**, run `rm -rf tmp/rubycritic/` to ensure the output directory is removed even if the agent failed to clean up.
+**After both agents finish**, clean up:
+- If SimpleCov ran: `rm -rf coverage/`
+- If RubyCritic ran: `rm -rf tmp/rubycritic/`
 
-**Interpreting the agent's response:**
-- If the response starts with `RUBYCRITIC_FAILED`: no code quality data — note the failure reason in the report.
-- If the response starts with `RUBYCRITIC_DATA`: parse the structured data and keep it in context for Steps 4 and 5. The data includes overall score, per-directory ratings, worst-rated files, top smells, and most complex files.
+**Interpreting responses:**
+- `COVERAGE_FAILED` / `RUBYCRITIC_FAILED`: no data for that tool — use estimation mode (SimpleCov) or omit the section (RubyCritic). Note the failure reason in the report.
+- `COVERAGE_DATA`: parse and keep in context for Steps 4 and 5 (overall coverage, per-directory breakdowns, lowest-coverage files, zero-coverage files).
+- `RUBYCRITIC_DATA`: parse and keep in context for Steps 4 and 5 (overall score, per-directory ratings, worst-rated files, top smells, most complex files).
 
 ### Step 3: Load Reference Materials
 
