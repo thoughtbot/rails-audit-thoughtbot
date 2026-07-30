@@ -57,6 +57,8 @@ Before analyzing, read the relevant reference files:
 
 ### Step 4: Analyze Code by Category
 
+All analysis must stay within the project root and the bundle path. To inspect gem source, use `bundle show <gem>` to locate it (see "Locate gem source" under Analysis Commands) — never run filesystem-wide searches like `find /`. If you delegate any category below to subagents, include this constraint in each subagent's prompt.
+
 Analyze in this order:
 
 1. **Testing Coverage & Quality**
@@ -174,6 +176,7 @@ Use Claude Code's built-in tools instead of shell commands — they're faster, h
 - **Search for patterns in code**: Use the Grep tool (e.g., search for `rescue\s*$`, `\.save\b`, `params\.permit!`)
 - **Read and count lines in files**: Use the Read tool to inspect files; count lines from the output
 - **Find long files**: Use Glob to list all `app/**/*.rb` files, then Read each to check line count
+- **Locate gem source**: When analysis requires reading gem-provided code (e.g., a base controller or concern from an engine like Devise, Administrate, or Madmin), use `bundle show <gem>` (or `bundle exec gem which <gem>/<path>`) to find the installed gem's directory, then Read/Grep within it. Never search outside the project root and the bundle path — no `find /` or home-directory-wide globs.
 
 ## Report Output
 
